@@ -1,6 +1,7 @@
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 from http.server import HTTPServer, SimpleHTTPRequestHandler
 from collections import defaultdict
+import argparse
 import datetime
 import pandas
 import os
@@ -45,9 +46,13 @@ def getting_information_drinks(file, sheet):
 
 
 if __name__ == '__main__':
+    parser = argparse.ArgumentParser()
+    parser.add_argument('path_and_name_file', nargs='?', default='wine3.xlsx', type=str)
+    parser.add_argument('sheet', nargs='?', default='Лист1', type=str)
+    args = parser.parse_args()
+    drinks_file = args.path_and_name_file
+    sheet_file = args.sheet
     age_winery = datetime.datetime.now().year - YEAR_WINERY_FOUNDATION
-    drinks_file = 'wine3.xlsx'
-    sheet_file = 'Лист1'
 
     env = Environment(
         loader=FileSystemLoader('.'),
@@ -55,14 +60,19 @@ if __name__ == '__main__':
     )
     template = env.get_template('template.html')
 
-    rendered_page = template.render(
-        age_winery=age_winery,
-        year=getting_age_winery(age_winery),
-        information_drinks=getting_information_drinks(drinks_file, sheet_file)
-    )
+    try:
+        rendered_page = template.render(
+            age_winery=age_winery,
+            year=getting_age_winery(age_winery),
+            information_drinks=getting_information_drinks(drinks_file, sheet_file)
+        )
 
-    with open('index.html', 'w', encoding="utf8") as file:
-        file.write(rendered_page)
+        with open('index.html', 'w', encoding="utf8") as file:
+            file.write(rendered_page)
 
-    server = HTTPServer(('0.0.0.0', 8000), SimpleHTTPRequestHandler)
-    server.serve_forever()
+        server = HTTPServer(('0.0.0.0', 8000), SimpleHTTPRequestHandler)
+        server.serve_forever()
+    except FileNotFoundError:
+        print('Файл не найден')
+
+
